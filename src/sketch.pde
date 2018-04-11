@@ -1,7 +1,7 @@
 //Control parameters for the model
-float RatioA=0.50; //How many "reds" in the array
-float RatioB=0.50; //How many individualist in the array
-int N=10;       //array side
+float RatioA=0.5; //How many "reds" in the array
+float RatioB=0.5; //How many individualist in the array
+int N=50;       //array side
 
 //2D "World" of individuals
 int A[][] = new int[N][N];
@@ -10,12 +10,17 @@ boolean B[][] = new boolean[N][N];
 //for flow and speed control of the program
 int StepCounter=0;//!!!
 int M=1;         //How often we draw visualization and calculate statistics
-int Frames=100;    //How many frames per sec. we would like(!) to call.
+int Frames=10;    //How many frames per sec. we would like(!) to call.
+boolean Running=true;
+
+//for visualization
+int S=13;       //cell width & height
+int StatusHeigh=13; //For status line below cells
 
 //For step by step model changing 
 //COMMENTED OUT!
 //boolean steponclick=false; //Do step on mouse click or automatically
-//boolean ready=true;//help for do one step at a time
+boolean ready=true;//help for do one step at a time
 
 //Statistics
 int  Ones=0;
@@ -31,24 +36,19 @@ float  Dynamics=0;//How many changes?
 float  ConfDynamics=0;
 float  NConDynamics=0;
 
-PrintWriter output;//For writing statistics into disk drive
+Clustering ClStat;
 
-//for visualization only
-int S=13;       //cell width & height
-int StatusHeigh=13; //For status line below cells
+PrintWriter output;//For writing statistics into disk drive
 
 void setup() //Window and model initialization
 {
-  //size(N*S,N*S+StatusHeigh);//TAK NIE DZIAŁA W JavaScript mode! i od wersji 3.0
-  size(130,143);
   noSmooth(); //Fast visualization
   frameRate(Frames); //maximize speed
   textSize(StatusHeigh);
-
-  //size(50*13,51*13);//Tak też nie
-  //size(700,700);//Tak startuje, ale są inne problemy nie pozwalające normalnie działać
+  size(N*S,N*S+StatusHeigh);
+  ClStat= new Clustering(A);
   
-  output = createWriter("Statistics.log"); // Create a new file in the sketch directory //<>//
+  output = createWriter("Statistics.log"); // Create a new file in the sketch directory
   
   DoModelInitialisation();
 }
@@ -65,12 +65,30 @@ void exit() //it is called whenever a window is closed.
 
 void draw() //Running - visualization, statistics and model dynamics
 {
-  if(StepCounter%M==0) //Do it every M-th step 
+  if(StepCounter%M==0 || !Running ) //Do it every M-th step 
   {
     background(128); //Clear the window
     DoDraw();
     DoStatistics();
   }
+  if(keyPressed)
+  {
+    if(ready)
+    {
+     switch(key){
+     case '8': ClStat.UseMoore=true; break;
+     case '4': ClStat.UseMoore=false; break;  
+     case 'C':
+     case 'c': ClStat.Visualise=! ClStat.Visualise; break;
+     case 'S':
+     case 's': Running=false; break;
+     case 'R': 
+     case 'r': Running=true; break;
+     }
+     ready=false;
+    } 
+  }
+  else ready=true;
  /* COMMENTED OUT!
   if(steponclick)
   {
@@ -84,8 +102,9 @@ void draw() //Running - visualization, statistics and model dynamics
    }
    else ready=true;
   }
-  else */  
-  DoMonteCarloStep();
+  else */ 
+  if(Running) 
+    DoMonteCarloStep();
 }
 
 
@@ -230,11 +249,15 @@ void DoStatistics() //Calculate and print statistics, maybe also into text file
 { 
   if(StepCounter==0)// Write the headers to the file only once
      output.println("StepCounter \t Dynamics  \t ConfDynamics \t NConDynamics \t  Zeros \t  Ones \t Stress \t ConfStress \t NConStress \t frameRate"); 
-  
+
   Count(); //Calculate the after step statistics 
+  ClStat.Calculate(); //Calculate quite complicate cluster statistics
   String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate;
   fill(0,0,0);            //Color of text (!) on the window
   text(Stats,1,S*(N+1)+1);//Print the statistics on the window
-  println(Stats);        // Write the statistics to the console
-  output.println(Stats); // Write the statistics to the file
+  if(Running)
+  {
+    println(Stats);        // Write the statistics to the console
+    output.println(Stats); // Write the statistics to the file
+  }
 }
