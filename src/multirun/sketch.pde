@@ -34,12 +34,12 @@ float ParameterVal=ParameterStart;//and setting the starting value
 
 //For flow and speed control of the program
 /////////////////////////////////////////////////////
-int M=100;          //How often we draw visualization and calculate statistics. Cant be grater than "STOPAfter" defined in model.pde!
+int M=50;          //How often we draw visualization and calculate statistics. Cant be grater than "STOPAfter" defined in model.pde!
 int Frames=100;     //How many frames per sec. we would like(!) to call.
 boolean Running=true; //Start simulation immediatelly after program begin to run
 
 //... and for visualization
-int S=10;       //cell width & height
+int S=20;       //cell width & height
 int StatusHeigh=15; //For status line below cells
 boolean UseLogDraw=false; //On/off of logarithic visualisation
 boolean DumpScreens=false;//On/off of frame dumping
