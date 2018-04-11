@@ -1,9 +1,10 @@
-//Model in extended version - with strengh
+//Model in extended version - with noise and bias and possible use of strengh
 //////////////////////////////////////////////////////////////////////////////////////////
 //Control parameters for the model
-float RatioA=0.5; //How many "reds" in the array
-float RatioB=0.01; //How many individualist in the array
-float Noise=2; //some noise as a ratio of -MaxStrengh..MaxStrengh
+float RatioA=0.3; //How many "reds" in the array
+float RatioB=0; //How many individualist in the array
+float Noise=1; //some noise as a ratio of -MaxStrengh..MaxStrengh
+float Bias=0;  //BIAS not implemented properly (work to strong currently!)
 
 int   N=50;       //array side
 float MaxStrengh=1000;//have not to be 0 or negative!
@@ -18,8 +19,8 @@ int Frames=100;    //How many frames per sec. we would like(!) to call.
 boolean Running=true;
 
 //for visualization
-int S=14;       //cell width & height
-int StatusHeigh=14; //For status line below cells
+int S=10;       //cell width & height
+int StatusHeigh=15; //For status line below cells
 boolean UseLogDraw=false; //On/off of logarithic visualisation
 boolean DumpScreens=false;//On/off of frame dumping
 
@@ -29,6 +30,10 @@ boolean ready=true;//help for do one step at a time
 //Statistics
 int  Ones=0;
 int  Zeros=0;
+int  ConfOnes=0;
+int  NConfOnes=0;
+int  ConfZeros=0;
+int  NConfZeros=0;
 int  Conformist=0;
 int  Nonconformist=0;
 
@@ -203,13 +208,19 @@ void DoMonteCarloStep()
       
      support+=Noise*random(-MaxStrengh,MaxStrengh);
      
+     if(Bias!=0) //Do we wont "bias" to work?
+      if(A[i][j]==1) //Chmm? Is it work properly?
+       support+=Bias*MaxStrengh;
+       else          //I afraid, it is not the same way :-( as in previous papers
+       support-=Bias*MaxStrengh;
+     
      if(B[i][j])
      {
       if(support>=0)
       {
       Dynamics++;
       NConDynamics++;
-      if(A[i][j]==1)
+      if(A[i][j]==1) //make switch
        A[i][j]=0;
        else
        A[i][j]=1;
@@ -220,7 +231,7 @@ void DoMonteCarloStep()
       {
       Dynamics++;
       ConfDynamics++;
-      if(A[i][j]==1)
+      if(A[i][j]==1)//switch
        A[i][j]=0;
        else
        A[i][j]=1;
@@ -291,6 +302,10 @@ void Count()
   Ones=0;
   Zeros=0;
   Stress=0;
+  ConfOnes=0;
+  NConfOnes=0;
+  ConfZeros=0;
+  NConfZeros=0;
   ConfStress=0;
   NConStress=0;
   
@@ -298,9 +313,21 @@ void Count()
    for(int j=0;j<N;j++)
    {
     if(A[i][j]==1)
-      Ones++;
+    {
+      if(B[i][j])
+          NConfOnes++;
       else
+          ConfOnes++;
+      Ones++;
+    }
+    else
+    {
+      if(B[i][j])
+          NConfZeros++;
+      else
+          ConfZeros++;
       Zeros++;
+    }
     
      int LStress=0;
      for(int m=i-1;m<=i+1;m++)
@@ -328,14 +355,14 @@ void Count()
 void DoStatistics() //Calculate and print statistics,  into text file & maybe also to console
 { 
   if(StepCounter==0 && Running)// Write the headers to the file only once
-     output.println("StepCounter\t Dynamics\t ConfDynamics\t NConDynamics\t  Zeros\t  Ones\t Stress\t ConfStress\t NConStress\t frameRate"+"\t "
+     output.println("StepCounter\t Dynamics\t ConfDynamics\t NConDynamics\t  Zeros\t  Ones\t ConfZeros\t NConfZeros\t ConfOnes\t NConfOnesStress\t ConfStress\t NConStress\t frameRate"+"\t "
                    +ClStat.HeaderStr("\t ")+"\t "+CtrlParHeaderStr("\t ")); 
 
   Count(); //Calculate the after step statistics 
   
   ClStat.Calculate(); //Calculate quite complicate clusters statistics
-  
-  String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate+"\t "
+  //ConfZeros,NConfZeros,ConfOnes,NConfOnes
+  String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+ConfZeros+"\t "+NConfZeros+"\t "+ConfOnes+"\t "+NConfOnes+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate+"\t "
                   +ClStat.StatsStr("\t ")+"\t "+CtrlParValuesStr("\t ");
   fill(0,0,0);            //Color of text (!) on the window
   if(!DumpScreens) 

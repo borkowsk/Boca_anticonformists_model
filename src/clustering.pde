@@ -78,7 +78,7 @@ class Clustering
     K = new int[N][M];  //Stwórz miejsce na kopie
     RegX = new int[M*N]; //I miejsce na współrzedne punktów. Trochę duże
     RegY = new int[M*N]; 
-    println("Clustering 'device' for "+N+"x"+M+" is ready.");
+    println("Clustering calculator for "+N+"x"+M+" is ready.");
   }
 
   void ResetRegistry()
