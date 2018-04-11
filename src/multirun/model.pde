@@ -5,12 +5,13 @@ int StepCounter=0;  //Current step
 int STOPAfter=100; //How many steps in one run?
 
 //Control parameters for the model
-float RatioA=0.25; //How many "reds" in the array
-float RatioB=0.0; //How many individualist in the array
+float RatioA=0.500; //How many "reds" in the array
+float RatioB=0.005; //How many individualist in the array
+boolean  AntyConfoSelfRemoving=true;//Remowing the self of anty/nonconformist from local majority
 float Noise=0; //some noise as a ratio of -MaxStrengh..MaxStrengh
 float Bias=0;  //Positive BIAS promote "ones", negative promote "zeros" (scaled by MaxStrenght!)
 
-int   N=10;       //array side
+int   N=75;       //array side
 float MaxStrengh=100;//have not to be 0 or negative!
 int   Distribution=0;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
 
@@ -68,6 +69,7 @@ void DoModelInitialisation()
 {
   Nonconformist=0;
   Conformist=0;
+  StartingOnes=0;
   
   println("MODEL INITIALISATION... " 
     + RatioA +'\t' //How many "reds" in the array
@@ -82,7 +84,10 @@ void DoModelInitialisation()
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
     if( random(0,1) < RatioA )
+    {
      A[i][j]=1;
+     StartingOnes++;
+    }
     else
      A[i][j]=0;
      
@@ -132,26 +137,38 @@ void DoMonteCarloStep()
            support-=P[p][r];
       }
       
+     if(AntyConfoSelfRemoving && B[i][j]) //Remowing the self support of anty/nonconformist from local majority
+     {
+         //print("Supp was:"+support);
+         support-=P[i][j]; // was support--;
+         //println(" Now is "+support); 
+     }  
+     
      support+=Noise*random(-MaxStrengh,MaxStrengh);
      
      if(Bias!=0) //Bias=0;  //Positive BIAS promote "ones", negative promote "zeros"
       if( Bias>0 && A[i][j]==1) //Support for agent which is belonged to "ones" 
-       support+=Bias*MaxStrengh;
+       {
+         support+=Bias*MaxStrengh;
+       }
        else
        if( Bias<0 && A[i][j]==0) //Support for agent which is belonged to "zeros" 
-           support+=(-Bias)*MaxStrengh; 
-       
+       {
+           support+=(-Bias)*MaxStrengh;
+       }
      
      if(B[i][j])
      {
-      if(support>=0)
+      if(support>0) // conservative non-conformism (was agressive, with support>=0   !!!)
       {
       Dynamics++;
       NConDynamics++;
+      if(support==0) print("A was "+A[i][j]);
       if(A[i][j]==1) //make switch
        A[i][j]=0;
        else
        A[i][j]=1;
+      if(support==0) println(" & now is "+A[i][j]);
       }
      }
      else

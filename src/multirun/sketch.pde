@@ -1,5 +1,6 @@
 //Model in extended version - with noise and bias and possible use of strengh
 //rearranged for doing automatic repetitions and 1D parametrs space walks 
+//JUNE 02: Test for conservative nonconformists agents! 
 //////////////////////////////////////////////////////////////////////////////////////////
 
 //The main objects used in program
@@ -11,7 +12,7 @@ PrintWriter output;//For writing statistics into disk drive
 //REPETITIONS OF THE MODEL 
 //(Control varialbles for most nested virtual loop)
 ////////////////////////////////////////////////////////
-int NumberOfRepetitions=1000; //How many shoud be done at all
+int NumberOfRepetitions=2; //How many shoud be done at all
 int CurrentRepetition=0;   //On which repetition we currently work 
 
 // 1D parameter walk:
@@ -25,21 +26,21 @@ final int WALK_Bias=4;
 final int WALK_MaxStrenght=5;
 
 //Parameter "virtual loop" control variables
-float ParameterStart=0.0;
-float ParameterStep=0.01;
-float ParameterEnd= 0.3501;//A bit more, because of floating point precision. "double" may help, but not always!
+float ParameterStart=0.99;
+float ParameterStep=0.05;
+float ParameterEnd= 0.9999;//A bit more, because of floating point precision. "double" may help, but not always!
 
 int   ParameterWalk=WALK_RatioB;//Parameter walk selector
 float ParameterVal=ParameterStart;//and setting the starting value
 
 //For flow and speed control of the program
 /////////////////////////////////////////////////////
-int M=50;          //How often we draw visualization and calculate statistics. Cant be grater than "STOPAfter" defined in model.pde!
+int M=1;          //How often we draw visualization and calculate statistics. Cant be grater than "STOPAfter" defined in model.pde!
 int Frames=100;     //How many frames per sec. we would like(!) to call.
 boolean Running=true; //Start simulation immediatelly after program begin to run
 
 //... and for visualization
-int S=20;       //cell width & height
+int S=10;       //cell width & height
 int StatusHeigh=15; //For status line below cells
 boolean UseLogDraw=false; //On/off of logarithic visualisation
 boolean DumpScreens=false;//On/off of frame dumping
@@ -49,6 +50,7 @@ boolean ready=true;//help for do one step at a time
 
 //Statistics counters/variables
 /////////////////////////////////////////////////////
+int  StartingOnes=0;
 int  Ones=0;
 int  Zeros=0;
 int  ConfOnes=0;
@@ -262,14 +264,14 @@ void DoStatistics() //Calculate and print statistics,  into text file & maybe al
   && CurrentRepetition==0 
   && StepCounter==0 
   && Running)// Write the headers to the file only once
-     output.println("StepCounter\t Dynamics\t ConfDynamics\t NConDynamics\t  Zeros\t  Ones\t ConfZeros\t NConfZeros\t ConfOnes\t NConfOnes\t RealRatioB\t Stress\t ConfStress\t NConStress\t frameRate"+"\t "
+     output.println("StepCounter\t Dynamics\t ConfDynamics\t NConDynamics\t  Zeros\t  Ones\t ConfZeros\t NConfZeros\t ConfOnes\t NConfOnes\t RealRatioA\t RealRatioB\t Stress\t ConfStress\t NConStress\t frameRate"+"\t "
                    +ClStat.HeaderStr("\t ")+"\t "+CtrlParHeaderStr("\t ")); 
 
   Count(); //Calculate the after step statistics 
   
   ClStat.Calculate(); //Calculate quite complicate clusters statistics
   //ConfZeros,NConfZeros,ConfOnes,NConfOnes
-  String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+ConfZeros+"\t "+NConfZeros+"\t "+ConfOnes+"\t "+NConfOnes+"\t"+((double)(Nonconformist)/((double)(N*N)))+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate+"\t "
+  String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+ConfZeros+"\t "+NConfZeros+"\t "+ConfOnes+"\t "+NConfOnes+"\t"+((double)(StartingOnes)/((double)(N*N)))+"\t"+((double)(Nonconformist)/((double)(N*N)))+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate+"\t "
                   +ClStat.StatsStr("\t ")+"\t "+CtrlParValuesStr("\t ");
   fill(0,0,0);            //Color of text (!) on the window
   if(!DumpScreens) 
