@@ -1,11 +1,12 @@
 //Control parameters
 float RatioA=0.50; //How many "ones" in the array
-float RatioB=0.45;
-int N=40;       //array side
+float RatioB=0.25;
+int N=50;       //array side
 
 //for visualisation
-int S=15;       //cell width & height
+int S=18;       //cell width & height
 boolean ready=true;//help for do one step at a time
+int step=0;
 
 //2D "World" of individuals
 int A[][] = new int[N][N];
@@ -16,6 +17,8 @@ void setup()
 {
   size(N*S,N*S);
   smooth();
+  frameRate(30); //maximize speed
+  
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
     if( random(0,1) < RatioA )
@@ -34,7 +37,7 @@ void setup()
 //Running - visualisation and dynamics
 void draw()
 {
-
+ 
  for(int i=0;i<N;i++)
  {
   for(int j=0;j<N;j++)
@@ -54,7 +57,7 @@ void draw()
     ellipse(i*S+S/2,j*S+S/2,S/3,S/3);
    }
  }  
-  
+  if(step%10==0) println(frameRate+" "+step);
   DoMonteCarloStep();
   /*
   if(mousePressed==true)
@@ -109,4 +112,5 @@ void DoMonteCarloStep()
        A[i][j]=1;
       }    
    }
+   step++;
 }
