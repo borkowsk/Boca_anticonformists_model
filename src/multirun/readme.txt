@@ -1,0 +1,1 @@
+Wersja do wielokrotnego puszczania
