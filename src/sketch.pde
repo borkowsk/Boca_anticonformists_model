@@ -1,7 +1,7 @@
 //Control parameters for the model
 float RatioA=0.50; //How many "reds" in the array
-float RatioB=0.90; //How many individualist in the array
-int N=50;       //array side
+float RatioB=0.50; //How many individualist in the array
+int N=10;       //array side
 
 //2D "World" of individuals
 int A[][] = new int[N][N];
@@ -11,10 +11,6 @@ boolean B[][] = new boolean[N][N];
 int StepCounter=0;//!!!
 int M=1;         //How often we draw visualization and calculate statistics
 int Frames=100;    //How many frames per sec. we would like(!) to call.
-
-//for visualization
-int S=13;       //cell width & height
-int StatusHeigh=13; //For status line below cells
 
 //For step by step model changing 
 //COMMENTED OUT!
@@ -37,14 +33,22 @@ float  NConDynamics=0;
 
 PrintWriter output;//For writing statistics into disk drive
 
+//for visualization only
+int S=13;       //cell width & height
+int StatusHeigh=13; //For status line below cells
+
 void setup() //Window and model initialization
 {
+  //size(N*S,N*S+StatusHeigh);//TAK NIE DZIAŁA W JavaScript mode! i od wersji 3.0
+  size(130,143);
   noSmooth(); //Fast visualization
   frameRate(Frames); //maximize speed
   textSize(StatusHeigh);
-  size(N*S,N*S+StatusHeigh);
+
+  //size(50*13,51*13);//Tak też nie
+  //size(700,700);//Tak startuje, ale są inne problemy nie pozwalające normalnie działać
   
-  output = createWriter("Statistics.log"); // Create a new file in the sketch directory
+  output = createWriter("Statistics.log"); // Create a new file in the sketch directory //<>//
   
   DoModelInitialisation();
 }
@@ -228,7 +232,7 @@ void DoStatistics() //Calculate and print statistics, maybe also into text file
      output.println("StepCounter \t Dynamics  \t ConfDynamics \t NConDynamics \t  Zeros \t  Ones \t Stress \t ConfStress \t NConStress \t frameRate"); 
   
   Count(); //Calculate the after step statistics 
-  String  Stats=""+StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate;
+  String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate;
   fill(0,0,0);            //Color of text (!) on the window
   text(Stats,1,S*(N+1)+1);//Print the statistics on the window
   println(Stats);        // Write the statistics to the console
