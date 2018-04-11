@@ -1,13 +1,16 @@
-//Model in version with noise but without strengh
+//Model in extended version - with strengh
 //////////////////////////////////////////////////////////////////////////////////////////
 //Control parameters for the model
-float RatioA=0.50; //How many "reds" in the array
-float RatioB=0.01; //How many individualist in the array
-int   N=50;        //array side
-float Noise=1;
+float RatioA=0.5; //How many "reds" in the array
+float RatioB=0.1; //How many individualist in the array
+int   N=50;       //array side
+float Noise=1; //some noise as a ratio of -MaxStrengh..MaxStrengh
+float MaxStrengh=1000;//have not to be 0 or negative!
+int   Distribution=0;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
 
 //2D "World" of individuals
-int A[][] = new int[N][N];  //Attitudes of agents
+int A[][] = new int[N][N];     //Attitudes
+float P[][] = new float[N][N];  //Strengh or "power"
 boolean B[][] = new boolean[N][N]; //Individualism
 
 //for flow and speed control of the program
@@ -17,8 +20,10 @@ int Frames=10;    //How many frames per sec. we would like(!) to call.
 boolean Running=true;
 
 //for visualization
-int S=13;       //cell width & height
-int StatusHeigh=13; //For status line below cells
+int S=14;       //cell width & height
+int StatusHeigh=14; //For status line below cells
+boolean UseLogDraw=false; //On/off of logarithic visualisation
+boolean DumpScreens=false;//On/off of frame dumping
 
 //For controling program from keyboard
 boolean ready=true;//help for do one step at a time
@@ -33,9 +38,9 @@ float Stress=0;
 float ConfStress=0;
 float NConStress=0;
 
-float  Dynamics=0;//How many changes?
-float  ConfDynamics=0;
-float  NConDynamics=0;
+float Dynamics=0;//How many changes?
+float ConfDynamics=0;
+float NConDynamics=0;
 
 Clustering ClStat;//Cluster finding "device"
 
@@ -43,15 +48,17 @@ PrintWriter output;//For writing statistics into disk drive
 
 void setup() //Window and model initialization
 {
-  noSmooth(); //Fast visualization
+  //noSmooth(); //Fast visualization
   frameRate(Frames); //maximize speed
+  noLoop();
   textSize(StatusHeigh);
-  size(N*S,N*S+StatusHeigh);
-  ClStat= new Clustering(A);
+  size(N*S,N*S+StatusHeigh+StatusHeigh/2);
   
+  ClStat= new Clustering(A);
   output = createWriter("Statistics.log"); // Create a new file in the sketch directory
   
   DoModelInitialisation();
+  loop();
 }
 
 void exit() //it is called whenever a window is closed. 
@@ -69,9 +76,15 @@ void draw() //Running - visualization, statistics and model dynamics
   if(StepCounter%M==0 || !Running ) //Do it every M-th step 
   {
     background(128); //Clear the window
-    DoDraw();
+    if(UseLogDraw)
+        DoDrawSizeLog();
+    else
+        DoDrawFill();
     DoStatistics();
+    if(DumpScreens) 
+        saveFrame("frame-######.png");
   }
+  
   if(keyPressed)
   {
     if(ready)
@@ -79,8 +92,12 @@ void draw() //Running - visualization, statistics and model dynamics
      switch(key){
      case '8': ClStat.UseMoore=true; break;
      case '4': ClStat.UseMoore=false; break;  
-     case 'C':
-     case 'c': ClStat.Visualise=! ClStat.Visualise; break;
+     case 'B':            
+     case 'b': ClStat.VisualBorders=!ClStat.VisualBorders;break;
+     case 'C':            
+     case 'c': ClStat.VisualClust=! ClStat.VisualClust; break;
+     case 'D':
+     case 'd': ClStat.VisualDimens=!ClStat.VisualDimens; break;
      case 'S':
      case 's': Running=false; break;
      case 'R': 
@@ -95,6 +112,36 @@ void draw() //Running - visualization, statistics and model dynamics
     DoMonteCarloStep();
 }
 
+float RandomGaussPareto(int Dist)// when Dist is negative, it is Pareto, when positive, it is Gauss
+{
+  if(Dist>0)
+  {
+    float s=0;
+    for(int i=0;i<Dist;i++)
+      s+=random(0,1);
+    return s/Dist;  
+  }
+  else
+  {
+    float s=1;
+    for(int i=Dist;i<0;i++)
+       s*=random(0,1);
+    return s;
+  }
+}
+
+//int   Distribution=1;//1 means flat
+void DoStrenghInitialisation()
+{
+  for(int i=0;i<N;i++)
+   for(int j=0;j<N;j++)
+   {
+     if(Distribution!=0)
+       P[i][j]=1+RandomGaussPareto(Distribution)*(MaxStrengh-1);//Not below one !!!
+       else
+       P[i][j]=MaxStrengh;
+   }
+}
 
 void DoModelInitialisation()
 {
@@ -117,6 +164,8 @@ void DoModelInitialisation()
      B[i][j]=false;
      Conformist++;
     } 
+    
+   DoStrenghInitialisation(); 
 }
 
 void DoMonteCarloStep()
@@ -137,14 +186,16 @@ void DoMonteCarloStep()
         int p=(m+N)%N;
         int r=(n+N)%N;
         if(A[p][r]==A[i][j])
-           support++;
+           support+=P[p][r];
+           else
+           support-=P[p][r];
       }
-  
-     support+=random(-1,1)*Noise;
+      
+     support+=Noise*random(-MaxStrengh,MaxStrengh);
      
      if(B[i][j])
      {
-      if(support>=5)
+      if(support>=0)
       {
       Dynamics++;
       NConDynamics++;
@@ -155,7 +206,7 @@ void DoMonteCarloStep()
       }
      }
      else
-     if(support<5)
+     if(support<0)
       {
       Dynamics++;
       ConfDynamics++;
@@ -173,25 +224,54 @@ void DoMonteCarloStep()
 }
 
 
-void DoDraw() //Visualize the cells or agents
+void DoDrawFill() //Visualize the cells or agents
 {
   for(int i=0;i<N;i++)
   {
    for(int j=0;j<N;j++)
    {
     if(A[i][j]==1)
-      fill(255,0,0);
+      fill(255*P[i][j]/MaxStrengh,0,0);
     else
-      fill(255);
+      fill(255*P[i][j]/MaxStrengh);
          
     rect(i*S,j*S,S,S);
-    
-    if(B[i][j])
-      fill(0,255,0);
+    if(RatioB>0)
+    {
+     if(B[i][j])
+       fill(0,255,0);
+     else
+       fill(0,0,255);
+     ellipse(i*S+S/2,j*S+S/2,S/2,S/2);
+    }
+   }
+ }  
+}
+
+float log10 (float x) // Calculates the base-10 logarithm of a number
+{
+  return (log(x) / log(10));
+}
+
+void DoDrawSizeLog() //Visualize the cells or agents
+{
+  float Max=log10(MaxStrengh);
+  for(int i=0;i<N;i++)
+  {
+   for(int j=0;j<N;j++)
+   {
+    if(A[i][j]==1)
+      fill(255*P[i][j],0,0);
     else
-      fill(0,0,255);
-      
-    ellipse(i*S+S/2,j*S+S/2,S/2,S/2);
+      fill(255*P[i][j]);
+     
+    if(B[i][j])
+      stroke(0,255,0);
+    else
+      stroke(0,0,255);  
+         
+    int SofThis=int(S*(log10(P[i][j])/Max)+1);
+    rect(i*S,j*S,SofThis,SofThis);
    }
  }  
 }
@@ -241,10 +321,15 @@ void DoStatistics() //Calculate and print statistics, maybe also into text file
      output.println("StepCounter \t Dynamics  \t ConfDynamics \t NConDynamics \t  Zeros \t  Ones \t Stress \t ConfStress \t NConStress \t frameRate"); 
 
   Count(); //Calculate the after step statistics 
+  
   ClStat.Calculate(); //Calculate quite complicate cluster statistics
+  
   String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate;
   fill(0,0,0);            //Color of text (!) on the window
-  text(Stats,1,S*(N+1)+1);//Print the statistics on the window
+  if(!DumpScreens) 
+      text(Stats,1,S*(N+1)+1);//Print the statistics on the window
+  else
+      text("Step:"+StepCounter+" Opinions: "+Zeros+" : "+Ones,1,S*(N+1)+1);
   if(Running)
   {
     println(Stats);        // Write the statistics to the console
