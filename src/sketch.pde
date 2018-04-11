@@ -3,8 +3,9 @@
 //Control parameters for the model
 float RatioA=0.5; //How many "reds" in the array
 float RatioB=0.1; //How many individualist in the array
+float Noise=1.5; //some noise as a ratio of -MaxStrengh..MaxStrengh
+
 int   N=50;       //array side
-float Noise=1; //some noise as a ratio of -MaxStrengh..MaxStrengh
 float MaxStrengh=1000;//have not to be 0 or negative!
 int   Distribution=0;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
 
@@ -55,7 +56,8 @@ void setup() //Window and model initialization
   size(N*S,N*S+StatusHeigh+StatusHeigh/2);
   
   ClStat= new Clustering(A);
-  output = createWriter("Statistics.log"); // Create a new file in the sketch directory
+  String LogName="Ind_"+CtrlParValuesStr("-")+".log";
+  output = createWriter(LogName); // Create a new file in the sketch directory
   
   DoModelInitialisation();
   loop();
@@ -315,24 +317,51 @@ void Count()
    ConfStress/=Conformist;
 }
 
-void DoStatistics() //Calculate and print statistics, maybe also into text file
+void DoStatistics() //Calculate and print statistics,  into text file & maybe also to console
 { 
   if(StepCounter==0)// Write the headers to the file only once
-     output.println("StepCounter \t Dynamics  \t ConfDynamics \t NConDynamics \t  Zeros \t  Ones \t Stress \t ConfStress \t NConStress \t frameRate"); 
+     output.println("StepCounter\t Dynamics\t ConfDynamics\t NConDynamics\t  Zeros\t  Ones\t Stress\t ConfStress\t NConStress\t frameRate"+"\t "
+                   +ClStat.HeaderStr("\t ")+"\t "+CtrlParHeaderStr("\t ")); 
 
   Count(); //Calculate the after step statistics 
   
-  ClStat.Calculate(); //Calculate quite complicate cluster statistics
+  ClStat.Calculate(); //Calculate quite complicate clusters statistics
   
-  String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate;
+  String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate+"\t "
+                  +ClStat.StatsStr("\t ")+"\t "+CtrlParValuesStr("\t ");
   fill(0,0,0);            //Color of text (!) on the window
   if(!DumpScreens) 
-      text(Stats,1,S*(N+1)+1);//Print the statistics on the window
+      text(Stats, 1,S*(N+1)+1);//Print the statistics on the window
   else
-      text("Step:"+StepCounter+" Opinions: "+Zeros+" : "+Ones,1,S*(N+1)+1);
+      text("Step:"+StepCounter+" Opinions: "+Zeros+" : "+Ones, 1,S*(N+1)+1);
+      
   if(Running)
   {
-    println(Stats);        // Write the statistics to the console
+  //  println(Stats);        // Write the statistics to the console
     output.println(Stats); // Write the statistics to the file
   }
 }
+
+String CtrlParHeaderStr(String Sep)
+{
+  return "RatioA"+Sep//=0.5; //How many "reds" in the array
+  +"RatioB"+Sep//=0.99; //How many individualist in the array
+  +"Noise"+Sep//=1.5; //some noise as a ratio of -MaxStrengh..MaxStrengh
+  +"MaxStrengh"+Sep//=1000;//have not to be 0 or negative!
+  +"Distribution"+Sep//=0;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
+  +"N";//=50;       //array side
+}
+
+String CtrlParValuesStr(String Sep)
+{
+  return RatioA+Sep//=0.5; //How many "reds" in the array
+  +RatioB+Sep//=0.99; //How many individualist in the array
+  +Noise+Sep//=1.5; //some noise as a ratio of -MaxStrengh..MaxStrengh
+  +MaxStrengh+Sep//=1000;//have not to be 0 or negative!
+  +Distribution+Sep//=0;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
+  +N;//=50;       //array side
+}
+
+//***********************************************************************
+// 2013 (c) Wojciech Tomasz Borkowski  http://borkowski.iss.uw.edu.pl
+//***********************************************************************
