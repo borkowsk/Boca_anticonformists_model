@@ -1,6 +1,6 @@
 //Control parameters for the model
 float RatioA=0.50; //How many "reds" in the array
-float RatioB=0.01; //How many individualist in the array
+float RatioB=0.90; //How many individualist in the array
 int N=50;       //array side
 
 //2D "World" of individuals
@@ -14,7 +14,7 @@ int Frames=100;    //How many frames per sec. we would like(!) to call.
 
 //for visualization
 int S=13;       //cell width & height
-int StatusHeigh=20; //For status line below cells
+int StatusHeigh=13; //For status line below cells
 
 //For step by step model changing 
 //COMMENTED OUT!
@@ -24,7 +24,16 @@ int StatusHeigh=20; //For status line below cells
 //Statistics
 int  Ones=0;
 int  Zeros=0;
-int  Dynamics=0;//How many changes?
+int  Conformist=0;
+int  Nonconformist=0;
+
+float Stress=0;
+float ConfStress=0;
+float NConStress=0;
+
+float  Dynamics=0;//How many changes?
+float  ConfDynamics=0;
+float  NConDynamics=0;
 
 PrintWriter output;//For writing statistics into disk drive
 
@@ -88,14 +97,23 @@ void DoModelInitialisation()
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
     if( random(0,1) < RatioB )
+    {
      B[i][j]=true;
+     Nonconformist++;
+    }
     else
+    {
      B[i][j]=false;
+     Conformist++;
+    } 
 }
 
 void DoMonteCarloStep()
 {
    Dynamics=0;//How many changes?
+   ConfDynamics=0;
+   NConDynamics=0;
+   
    for(int a=0;a<N*N;a++) //as many times as number of cells 
    {
      int i=int(random(N));
@@ -116,6 +134,7 @@ void DoMonteCarloStep()
       if(support>=5)
       {
       Dynamics++;
+      NConDynamics++;
       if(A[i][j]==1)
        A[i][j]=0;
        else
@@ -126,6 +145,7 @@ void DoMonteCarloStep()
      if(support<5)
       {
       Dynamics++;
+      ConfDynamics++;
       if(A[i][j]==1)
        A[i][j]=0;
        else
@@ -133,6 +153,9 @@ void DoMonteCarloStep()
       }    
    }
    
+   Dynamics/=(N*N);
+   NConDynamics/=Nonconformist;
+   ConfDynamics/=Conformist;   
    StepCounter++; //Step done
 }
 
@@ -164,21 +187,48 @@ void Count()
 {
   Ones=0;
   Zeros=0;
+  Stress=0;
+  ConfStress=0;
+  NConStress=0;
+  
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
+   {
     if(A[i][j]==1)
       Ones++;
       else
       Zeros++;
+    
+     int LStress=0;
+     for(int m=i-1;m<=i+1;m++)
+      for(int n=j-1;n<=j+1;n++)
+      {
+        int p=(m+N)%N;
+        int r=(n+N)%N;
+        if(A[p][r]!=A[i][j])
+           LStress++;
+      }  
+      
+      Stress+=LStress/8.0;  
+      
+      if(B[i][j])
+          NConStress+=LStress/8.0;
+          else
+          ConfStress+=LStress/8.0;
+   }
+   
+   Stress/=(N*N);
+   NConStress/=Nonconformist;
+   ConfStress/=Conformist;
 }
 
 void DoStatistics() //Calculate and print statistics, maybe also into text file
-{
+{ 
   if(StepCounter==0)// Write the headers to the file only once
-     output.println("#\t StepCounter \t Dynamics \t  Zeros \t  Ones \t frameRate"); 
+     output.println("StepCounter \t Dynamics  \t ConfDynamics \t NConDynamics \t  Zeros \t  Ones \t Stress \t ConfStress \t NConStress \t frameRate"); 
   
   Count(); //Calculate the after step statistics 
-  String  Stats="#\t "+StepCounter+"\t "+Dynamics+"\t "+Zeros+"\t "+Ones+"\t "+frameRate;
+  String  Stats=""+StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate;
   fill(0,0,0);            //Color of text (!) on the window
   text(Stats,1,S*(N+1)+1);//Print the statistics on the window
   println(Stats);        // Write the statistics to the console
