@@ -1,9 +1,9 @@
 //Control parameters
-float Ones=0.1; //How many "ones" in the array
-int N=10;       //array side
+float Ratio=0.35; //How many "ones" in the array
+int N=20;       //array side
 
-//
-int S=20;       //cell width & height
+//for visualisation
+int S=15;       //cell width & height
 boolean ready=true;//help for do one step at a time
 
 //2D "World" of individuals
@@ -12,14 +12,14 @@ int A[][] = new int[N][N];
 //Initialisation
 void setup()
 {
-  //size(N*S,N*S); //NIE DZIAŁA W TRUBIE JavaScript!!!
-  size(200,200);
+  size(N*S,N*S);
+  
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
-   if( random(0,1) < Ones )
-    A[i][j]=1;
+    if( random(0,1) < Ratio )
+     A[i][j]=1;
     else
-    A[i][j]=0;
+     A[i][j]=0;
 }
 
 //Running - visualisation and dynamics
@@ -27,6 +27,7 @@ void draw()
 {
 
  for(int i=0;i<N;i++)
+ {
   for(int j=0;j<N;j++)
   {
     if(A[i][j]==1)
@@ -38,8 +39,10 @@ void draw()
       fill(255);
     }
     rect(i*S,j*S,S,S);
-  }  
+   }
+ }  
   
+  //DoMonteCarloStep();
   
   if(mousePressed==true)
   {
@@ -62,9 +65,19 @@ void DoMonteCarloStep()
    {
      int i=int(random(N));
      int j=int(random(N));
-     if(A[i][j]==1)
-       A[i][j]=0;
+     
+     int impact=0;
+     for(int m=i-1;m<=i+1;m++)
+      for(int n=j-1;n<=j+1;n++)
+      {
+        int p=(m+N)%N;
+        int r=(n+N)%N;
+        impact+=A[p][r];
+      }
+  
+     if(impact>=5)
+       A[i][j]=1;
        else
-       A[i][j]=1;    
+       A[i][j]=0;    
    }
 }
