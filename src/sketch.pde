@@ -1,24 +1,68 @@
-//Control parameters
-float RatioA=0.50; //How many "ones" in the array
-float RatioB=0.25;
+//Control parameters for the model
+float RatioA=0.50; //How many "reds" in the array
+float RatioB=0.33; //How many individualist in the array
 int N=50;       //array side
-
-//for visualisation
-int S=18;       //cell width & height
-boolean ready=true;//help for do one step at a time
-int step=0;
 
 //2D "World" of individuals
 int A[][] = new int[N][N];
 boolean B[][] = new boolean[N][N];
 
-//Initialisation
-void setup()
+//for flow and speed control of the program
+int StepCounter=0;//!!!
+int M=1;         //How often we draw visualization and calculate statistics
+int Frames=1;    //How many frames per sec. we would like(!) to call.
+
+//for visualization
+int S=18;       //cell width & height
+int StatusHeigh=25; //For status line below cells
+
+//For step by step model changing
+//boolean steponclick=false; //Do step on mouse click or automatically
+//boolean ready=true;//help for do one step at a time
+
+void setup() //Window and model initialization
 {
-  size(N*S,N*S);
-  smooth();
-  frameRate(30); //maximize speed
-  
+  noSmooth(); //Fast visualization
+  frameRate(Frames); //maximize speed
+  textSize(StatusHeigh);
+  size(N*S,N*S+StatusHeigh);
+  DoModelInitialisation();
+}
+
+void draw() //Running - visualization, statistics and model dynamics
+{
+  if(StepCounter%M==0) //Do it every M-th step 
+  {
+    background(128); //Clear the window
+    DoDraw();
+    DoStatistics();
+  }
+ /*
+  if(steponclick)
+  {
+   if(mousePressed==true)
+   {
+    if(ready==true)
+    {
+      DoMonteCarloStep();
+      ready=false;
+    }
+   }
+   else ready=true;
+  }
+  else */  
+  DoMonteCarloStep();
+}
+
+void exit() //it is called whenever a window is closed. 
+{
+  noLoop();
+  println("Thank You");
+  super.exit(); //What library superclass have to do at exit
+} 
+
+void DoModelInitialisation()
+{
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
     if( random(0,1) < RatioA )
@@ -33,48 +77,6 @@ void setup()
     else
      B[i][j]=false;
 }
-
-//Running - visualisation and dynamics
-void draw()
-{
- 
- for(int i=0;i<N;i++)
- {
-  for(int j=0;j<N;j++)
-  {
-    if(A[i][j]==1)
-      fill(255,0,0);
-    else
-      fill(255);
-         
-    rect(i*S,j*S,S,S);
-    
-    if(B[i][j])
-      fill(0,255,0);
-    else
-      fill(0,0,255);
-      
-    ellipse(i*S+S/2,j*S+S/2,S/3,S/3);
-   }
- }  
-  if(step%10==0) println(frameRate+" "+step);
-  DoMonteCarloStep();
-  /*
-  if(mousePressed==true)
-  {
-    if(ready==true)
-    {
-      DoMonteCarloStep();
-      ready=false;
-    }
-  }
-  else
-  {
-    ready=true;
-  }
-  */
-}
-
 
 void DoMonteCarloStep()
 {
@@ -112,5 +114,38 @@ void DoMonteCarloStep()
        A[i][j]=1;
       }    
    }
-   step++;
+   
+   StepCounter++; //Step done
 }
+
+void DoStatistics() //Calculate and print statistics, maybe also into text file
+{
+  String Stats="#\t "+StepCounter+"\t "+frameRate;
+  fill(0,0,0);
+  text(Stats,1,S*(N+1)+1);
+  println(Stats);
+}
+
+void DoDraw() //Visualize the cells or agents
+{
+  for(int i=0;i<N;i++)
+  {
+   for(int j=0;j<N;j++)
+   {
+    if(A[i][j]==1)
+      fill(255,0,0);
+    else
+      fill(255);
+         
+    rect(i*S,j*S,S,S);
+    
+    if(B[i][j])
+      fill(0,255,0);
+    else
+      fill(0,0,255);
+      
+    ellipse(i*S+S/2,j*S+S/2,S/3,S/3);
+   }
+ }  
+}
+
