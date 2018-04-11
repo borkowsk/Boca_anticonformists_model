@@ -1,12 +1,12 @@
-// Separated Model class which include model dynamics and control parameters 
+// Separated Model class which include model synamics and control parameters 
 //////////////////////////////////////////////////////////////////////////////////////
 
 int StepCounter=0;  //Current step
-int STOPAfter=1000; //How many steps in one run?
+int STOPAfter=100; //How many steps in one run?
 
 //Control parameters for the model
-float RatioA=0.2; //How many "reds" in the array
-float RatioB=0; //How many individualist in the array
+float RatioA=0.0; //How many "reds" in the array
+float RatioB=0.1; //How many individualist in the array
 float Noise=0; //some noise as a ratio of -MaxStrengh..MaxStrengh
 float Bias=0;  //Positive BIAS promote "ones", negative promote "zeros" (scaled by MaxStrenght!)
 

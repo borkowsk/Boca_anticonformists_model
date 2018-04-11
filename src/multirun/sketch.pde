@@ -1,16 +1,21 @@
 //Model in extended version - with noise and bias and possible use of strengh
+//rearranged for doing automatic repetitions and 1D parametrs space walks 
 //////////////////////////////////////////////////////////////////////////////////////////
 
 //The main objects used in program
+////////////////////////////////////////////////////////
 TheModel   MyModel;//All model data and dynamics. Also control parameters are n file Model.pde
 Clustering ClStat; //Cluster finding "device"
 PrintWriter output;//For writing statistics into disk drive
 
-//REPETITIONS OF THE MODEL
-int NumberOfRepetitions=1; //How many shoud be done at all
+//REPETITIONS OF THE MODEL 
+//(Control varialbles for most nested virtual loop)
+////////////////////////////////////////////////////////
+int NumberOfRepetitions=10; //How many shoud be done at all
 int CurrentRepetition=0;   //On which repetition we currently work 
 
 // 1D parameter walk:
+//////////////////////////////////////////////////////
 //constants for defining axis of walk (ParameterWalk)
 final int WALK_NO=0;
 final int WALK_RatioA=1;
@@ -19,25 +24,31 @@ final int WALK_Noise=3;
 final int WALK_Bias=4;
 final int WALK_MaxStrenght=5;
 
-float ParameterStart=0.0;
-float ParameterStep=0.100000000;
-float ParameterEnd= 1.01;//A bit more, because of floating point precision. "double" may help, but not always!
+//Parameter "virtual loop" control variables
+float ParameterStart=0.4;
+float ParameterStep=0.01;
+float ParameterEnd= 0.601;//A bit more, because of floating point precision. "double" may help, but not always!
 
-float ParameterVal=ParameterStart;//Parameter walk selector
-int   ParameterWalk=WALK_RatioB;
+int   ParameterWalk=WALK_RatioA;//Parameter walk selector
+float ParameterVal=ParameterStart;//and setting the starting value
 
-//for flow and speed control of the program
-int M=1;          //How often we draw visualization and calculate statistics
-int Frames=100;    //How many frames per sec. we would like(!) to call.
+//For flow and speed control of the program
+/////////////////////////////////////////////////////
+int M=100;          //How often we draw visualization and calculate statistics. Cant be grater than "STOPAfter" defined in model.pde!
+int Frames=100;     //How many frames per sec. we would like(!) to call.
 boolean Running=true; //Start simulation immediatelly after program begin to run
 
-//for visualization
+//... and for visualization
 int S=10;       //cell width & height
 int StatusHeigh=15; //For status line below cells
 boolean UseLogDraw=false; //On/off of logarithic visualisation
 boolean DumpScreens=false;//On/off of frame dumping
 
-//Statistics
+//... and for controling program from keyboard
+boolean ready=true;//help for do one step at a time
+
+//Statistics counters/variables
+/////////////////////////////////////////////////////
 int  Ones=0;
 int  Zeros=0;
 int  ConfOnes=0;
@@ -54,10 +65,6 @@ float NConStress=0;
 float Dynamics=0;//How many changes?
 float ConfDynamics=0;
 float NConDynamics=0;
-
-
-//For controling program from keyboard
-boolean ready=true;//help for do one step at a time
 
 void setup() //Window and model initialization
 {
@@ -77,7 +84,10 @@ void setup() //Window and model initialization
   MyModel.DoModelInitialisation();
   
   if(ParameterStep!=0)//Changing control parameter, using  ParameterVal and ParameterWalk selector 
+  {
+      println("First assigment of control parameter value: "+ParameterVal);
       AssignParameterValWalk();
+  }
  
   loop();
   frameRate(Frames); //maximize speed
@@ -101,7 +111,7 @@ void AssignParameterValWalk()
             case WALK_RatioB: RatioB=(float)ParameterVal; break; //Now we have to force conversion
             case WALK_Noise:  Noise=(float)ParameterVal; break;
             case WALK_Bias:   Bias=(float)ParameterVal; break;
-            case WALK_MaxStrenght: MaxStrenght=(float)ParameterVal; break;
+            case WALK_MaxStrenght: MaxStrengh=(float)ParameterVal; break;
             default: break;}
 }
 
@@ -302,7 +312,7 @@ String CtrlParValuesStr(String Sep)
   +NumberOfRepetitions
   ;
   if(ParameterStep!=0)
-    Pom+=Sep+ParameterStart+"++"+ParameterStep+"="+ParameterEnd;
+    Pom+=Sep+ParameterStart+"++"+ParameterStep+"="+ParameterEnd+"("+ParameterWalk+")";
   return Pom;
 }
 
