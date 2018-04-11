@@ -11,7 +11,7 @@ PrintWriter output;//For writing statistics into disk drive
 //REPETITIONS OF THE MODEL 
 //(Control varialbles for most nested virtual loop)
 ////////////////////////////////////////////////////////
-int NumberOfRepetitions=10; //How many shoud be done at all
+int NumberOfRepetitions=1000; //How many shoud be done at all
 int CurrentRepetition=0;   //On which repetition we currently work 
 
 // 1D parameter walk:
@@ -25,11 +25,11 @@ final int WALK_Bias=4;
 final int WALK_MaxStrenght=5;
 
 //Parameter "virtual loop" control variables
-float ParameterStart=0.4;
+float ParameterStart=0.0;
 float ParameterStep=0.01;
-float ParameterEnd= 0.601;//A bit more, because of floating point precision. "double" may help, but not always!
+float ParameterEnd= 0.3501;//A bit more, because of floating point precision. "double" may help, but not always!
 
-int   ParameterWalk=WALK_RatioA;//Parameter walk selector
+int   ParameterWalk=WALK_RatioB;//Parameter walk selector
 float ParameterVal=ParameterStart;//and setting the starting value
 
 //For flow and speed control of the program
@@ -68,12 +68,19 @@ float NConDynamics=0;
 
 void setup() //Window and model initialization
 {
+  println("SETUP...");
   noLoop(); //setup may take a longof time
   //noSmooth(); //For fastest visualization
   //println(param(0)+" "+param(1)+" "+param(2));//"param()" does not work :-(
   
   textSize(StatusHeigh);
   size(N*S,N*S+StatusHeigh+StatusHeigh/2);
+  
+  if(ParameterStep!=0)//Changing control parameter, using  ParameterVal and ParameterWalk selector 
+  {
+      println("First assigment of control parameter value: "+ParameterVal);
+      AssignParameterValWalk();
+  }
   
   MyModel = new TheModel();
   ClStat  = new Clustering(MyModel.A);
@@ -83,14 +90,9 @@ void setup() //Window and model initialization
   
   MyModel.DoModelInitialisation();
   
-  if(ParameterStep!=0)//Changing control parameter, using  ParameterVal and ParameterWalk selector 
-  {
-      println("First assigment of control parameter value: "+ParameterVal);
-      AssignParameterValWalk();
-  }
- 
   loop();
   frameRate(Frames); //maximize speed
+  println("SETUP FINISHED");
 }
 
 void exit() //it is called whenever a window is closed. 
@@ -260,14 +262,14 @@ void DoStatistics() //Calculate and print statistics,  into text file & maybe al
   && CurrentRepetition==0 
   && StepCounter==0 
   && Running)// Write the headers to the file only once
-     output.println("StepCounter\t Dynamics\t ConfDynamics\t NConDynamics\t  Zeros\t  Ones\t ConfZeros\t NConfZeros\t ConfOnes\t NConfOnes\t Stress\t ConfStress\t NConStress\t frameRate"+"\t "
+     output.println("StepCounter\t Dynamics\t ConfDynamics\t NConDynamics\t  Zeros\t  Ones\t ConfZeros\t NConfZeros\t ConfOnes\t NConfOnes\t RealRatioB\t Stress\t ConfStress\t NConStress\t frameRate"+"\t "
                    +ClStat.HeaderStr("\t ")+"\t "+CtrlParHeaderStr("\t ")); 
 
   Count(); //Calculate the after step statistics 
   
   ClStat.Calculate(); //Calculate quite complicate clusters statistics
   //ConfZeros,NConfZeros,ConfOnes,NConfOnes
-  String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+ConfZeros+"\t "+NConfZeros+"\t "+ConfOnes+"\t "+NConfOnes+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate+"\t "
+  String  Stats=StepCounter+"\t "+Dynamics+"\t "+ConfDynamics+"\t "+NConDynamics+"\t "+Zeros+"\t "+Ones+"\t "+ConfZeros+"\t "+NConfZeros+"\t "+ConfOnes+"\t "+NConfOnes+"\t"+((double)(Nonconformist)/((double)(N*N)))+"\t "+Stress+"\t "+ConfStress+"\t "+NConStress+"\t "+frameRate+"\t "
                   +ClStat.StatsStr("\t ")+"\t "+CtrlParValuesStr("\t ");
   fill(0,0,0);            //Color of text (!) on the window
   if(!DumpScreens) 

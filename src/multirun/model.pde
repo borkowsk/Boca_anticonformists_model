@@ -5,12 +5,12 @@ int StepCounter=0;  //Current step
 int STOPAfter=100; //How many steps in one run?
 
 //Control parameters for the model
-float RatioA=0.0; //How many "reds" in the array
-float RatioB=0.1; //How many individualist in the array
+float RatioA=0.25; //How many "reds" in the array
+float RatioB=0.0; //How many individualist in the array
 float Noise=0; //some noise as a ratio of -MaxStrengh..MaxStrengh
 float Bias=0;  //Positive BIAS promote "ones", negative promote "zeros" (scaled by MaxStrenght!)
 
-int   N=50;       //array side
+int   N=10;       //array side
 float MaxStrengh=100;//have not to be 0 or negative!
 int   Distribution=0;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
 
@@ -66,6 +66,19 @@ void DoStrenghInitialisation()
 
 void DoModelInitialisation()
 {
+  Nonconformist=0;
+  Conformist=0;
+  
+  println("MODEL INITIALISATION... " 
+    + RatioA +'\t' //How many "reds" in the array
+    + RatioB +'\t' //How many individualist in the array
+    + Noise +'\t'//some noise as a ratio of -MaxStrengh..MaxStrengh
+    + Bias  +'\t'//Positive BIAS promote "ones", negative promote "zeros" (scaled by MaxStrenght!)
+    + N     +'\t'  //array side
+    + MaxStrengh +'\t'//have not to be 0 or negative!
+    + Distribution//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
+       );
+       
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
     if( random(0,1) < RatioA )
@@ -92,6 +105,8 @@ void DoModelInitialisation()
    Dynamics=0;//How many changes?
    ConfDynamics=0;
    NConDynamics=0;
+   
+   println("DONE");
 }
 
 void DoMonteCarloStep()
