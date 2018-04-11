@@ -10,31 +10,39 @@ boolean B[][] = new boolean[N][N];
 //for flow and speed control of the program
 int StepCounter=0;//!!!
 int M=1;         //How often we draw visualization and calculate statistics
-int Frames=1;    //How many frames per sec. we would like(!) to call.
+int Frames=100;    //How many frames per sec. we would like(!) to call.
 
 //for visualization
-int S=13;       //cell width & height
-int StatusHeigh=20; //For status line below cells
+int S=18;       //cell width & height
+int StatusHeigh=25; //For status line below cells
 
-//For step by step model changing 
-//COMMENTED OUT!
+//For step by step model changing
 //boolean steponclick=false; //Do step on mouse click or automatically
 //boolean ready=true;//help for do one step at a time
 
-//Statistics
-int  Ones=0;
-int  Zeros=0;
-int  Dynamics=0;//How many changes?
+PrintWriter output;//For writing statistics into disk drive
 
 void setup() //Window and model initialization
 {
   noSmooth(); //Fast visualization
   frameRate(Frames); //maximize speed
   textSize(StatusHeigh);
-  //size(N*S,N*S+StatusHeigh);//Nie działa w JavaScripcie
-  size(660,680);
+  size(N*S,N*S+StatusHeigh);
+  
+  output = createWriter("Statistics.log"); // Create a new file in the sketch directory
+  
   DoModelInitialisation();
 }
+
+void exit() //it is called whenever a window is closed. 
+{
+  noLoop();        //For to be sure...
+  delay(100);
+  output.flush();  // Writes the remaining data to the file
+  output.close();  // Finishes the file
+  println("Thank You");
+  super.exit(); //What library superclass have to do at exit
+} 
 
 void draw() //Running - visualization, statistics and model dynamics
 {
@@ -44,7 +52,7 @@ void draw() //Running - visualization, statistics and model dynamics
     DoDraw();
     DoStatistics();
   }
- /* COMMENTED OUT!
+ /*
   if(steponclick)
   {
    if(mousePressed==true)
@@ -60,13 +68,6 @@ void draw() //Running - visualization, statistics and model dynamics
   else */  
   DoMonteCarloStep();
 }
-
-void exit() //it is called whenever a window is closed. 
-{
-  noLoop();
-  println("Thank You");
-  super.exit(); //What library superclass have to do at exit
-} 
 
 void DoModelInitialisation()
 {
@@ -87,7 +88,6 @@ void DoModelInitialisation()
 
 void DoMonteCarloStep()
 {
-   Dynamics=0;//How many changes?
    for(int a=0;a<N*N;a++) //as many times as number of cells 
    {
      int i=int(random(N));
@@ -107,7 +107,6 @@ void DoMonteCarloStep()
      {
       if(support>=5)
       {
-      Dynamics++;
       if(A[i][j]==1)
        A[i][j]=0;
        else
@@ -117,7 +116,6 @@ void DoMonteCarloStep()
      else
      if(support<5)
       {
-      Dynamics++;
       if(A[i][j]==1)
        A[i][j]=0;
        else
@@ -128,6 +126,14 @@ void DoMonteCarloStep()
    StepCounter++; //Step done
 }
 
+void DoStatistics() //Calculate and print statistics, maybe also into text file
+{
+  String Stats="#\t "+StepCounter+"\t "+frameRate;
+  fill(0,0,0);            //Color of text (!) on the window
+  text(Stats,1,S*(N+1)+1);//Print the statistics on the window
+  println(Stats);        // Write the statistics to the console
+  output.println(Stats); // Write the statistics to the file
+}
 
 void DoDraw() //Visualize the cells or agents
 {
@@ -152,23 +158,3 @@ void DoDraw() //Visualize the cells or agents
  }  
 }
 
-void Count()
-{
-  Ones=0;
-  Zeros=0;
-  for(int i=0;i<N;i++)
-   for(int j=0;j<N;j++)
-    if(A[i][j]==1)
-      Ones++;
-      else
-      Zeros++;
-}
-
-void DoStatistics() //Calculate and print statistics, maybe also into text file
-{
-  Count();
-  String Stats="#\t "+StepCounter+"\t "+Dynamics+"\t "+Zeros+"\t "+Ones+"\t "+frameRate;
-  fill(0,0,0);
-  text(Stats,2,S*(N+1)+1);
-  println(Stats);
-}
