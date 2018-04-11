@@ -1,0 +1,1 @@
+Wrzucone w kolejności tworzenia
