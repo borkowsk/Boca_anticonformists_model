@@ -2,22 +2,19 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 //Control parameters for the model
 float RatioA=0.5; //How many "reds" in the array
-float RatioB=0.1; //How many individualist in the array
-float Noise=1.5; //some noise as a ratio of -MaxStrengh..MaxStrengh
+float RatioB=0.01; //How many individualist in the array
+float Noise=2; //some noise as a ratio of -MaxStrengh..MaxStrengh
 
 int   N=50;       //array side
 float MaxStrengh=1000;//have not to be 0 or negative!
 int   Distribution=0;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
 
-//2D "World" of individuals
-int A[][] = new int[N][N];     //Attitudes
-float P[][] = new float[N][N];  //Strengh or "power"
-boolean B[][] = new boolean[N][N]; //Individualism
-
 //for flow and speed control of the program
 int StepCounter=0;//!!!
+int STOPAfter=1000;
+
 int M=1;          //How often we draw visualization and calculate statistics
-int Frames=10;    //How many frames per sec. we would like(!) to call.
+int Frames=100;    //How many frames per sec. we would like(!) to call.
 boolean Running=true;
 
 //for visualization
@@ -47,11 +44,17 @@ Clustering ClStat;//Cluster finding "device"
 
 PrintWriter output;//For writing statistics into disk drive
 
+//2D "World" of individuals
+int A[][] = new int[N][N];     //Attitudes
+float P[][] = new float[N][N];  //Strengh or "power"
+boolean B[][] = new boolean[N][N]; //Individualism
+
 void setup() //Window and model initialization
 {
-  //noSmooth(); //Fast visualization
-  frameRate(Frames); //maximize speed
-  noLoop();
+  noLoop(); //setup may take a longof time
+  //noSmooth(); //For fastest visualization
+  //println(param(0)+" "+param(1)+" "+param(2));//"param()" does not work :-(
+  
   textSize(StatusHeigh);
   size(N*S,N*S+StatusHeigh+StatusHeigh/2);
   
@@ -60,7 +63,9 @@ void setup() //Window and model initialization
   output = createWriter(LogName); // Create a new file in the sketch directory
   
   DoModelInitialisation();
+ 
   loop();
+  frameRate(Frames); //maximize speed
 }
 
 void exit() //it is called whenever a window is closed. 
@@ -99,7 +104,7 @@ void draw() //Running - visualization, statistics and model dynamics
      case 'C':            
      case 'c': ClStat.VisualClust=! ClStat.VisualClust; break;
      case 'D':
-     case 'd': ClStat.VisualDimens=!ClStat.VisualDimens; break;
+     case 'd': ClStat.VisualDiameters=!ClStat.VisualDiameters; break;
      case 'S':
      case 's': Running=false; break;
      case 'R': 
@@ -112,6 +117,9 @@ void draw() //Running - visualization, statistics and model dynamics
  
   if(Running) 
     DoMonteCarloStep();
+  
+  if(Running && STOPAfter<StepCounter)
+        Running=false;
 }
 
 float RandomGaussPareto(int Dist)// when Dist is negative, it is Pareto, when positive, it is Gauss
@@ -319,7 +327,7 @@ void Count()
 
 void DoStatistics() //Calculate and print statistics,  into text file & maybe also to console
 { 
-  if(StepCounter==0)// Write the headers to the file only once
+  if(StepCounter==0 && Running)// Write the headers to the file only once
      output.println("StepCounter\t Dynamics\t ConfDynamics\t NConDynamics\t  Zeros\t  Ones\t Stress\t ConfStress\t NConStress\t frameRate"+"\t "
                    +ClStat.HeaderStr("\t ")+"\t "+CtrlParHeaderStr("\t ")); 
 

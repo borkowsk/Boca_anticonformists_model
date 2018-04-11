@@ -3,8 +3,8 @@ class Clustering
   //Parametry sterujące wizualizacją badań klastrów
   boolean UseMoore=false;
   boolean VisualClust=false;
-  boolean VisualBorders=true;
-  boolean VisualDimens=true;
+  boolean VisualBorders=false;
+  boolean VisualDiameters=false;
   
   //Zmienne zbierajace dane statystyczne i określające ich nazwy w pliku wyjściowym
   //Za KLASTER uznawana jest grupa co najmniej 2 komórek w tym samym kolorze!
@@ -207,7 +207,7 @@ class Clustering
       } 
     }
     
-    if(VisualDimens && imax!=-1 && jmax!=-1 )
+    if(VisualDiameters && imax!=-1 && jmax!=-1 )
     {
       if(ThrTorus)
        { stroke(0,255,255);fill(0,255,255);}
