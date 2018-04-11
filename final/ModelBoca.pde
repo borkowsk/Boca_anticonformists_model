@@ -9,30 +9,28 @@ final int   N=50;       //array side
 //NOT TESTED WELL!!! Introduced for future work.
 float Bias=0;  //Positive BIAS promote "ones", negative promote "zeros" (scaled by MaxStrenght!)
 float MaxStrengh=1000;//have not to be 0 or negative!
-int   Distribution=-1;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
-
-
-//for visualization
-final int S=10;       //cell width & height
-final int StatusHeigh=15; //For status line below cells
-final int WinWidth=N*S;
-final int WinHeigh=N*S+StatusHeigh+StatusHeigh/2;
-boolean UseLogDraw=false; //On/off of logarithic visualisation
-boolean DumpScreens=false;//On/off of frame dumping
+int   Distribution=0;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
 
 //for flow and speed control of the program
 int StepCounter=0;//!!!
 int STOPAfter=10000;
-
 int M=1;          //How often we draw visualization and calculate statistics
 int Frames=20;    //How many frames per sec. we would like(!) to call.
+
+//for visualization
+final int S=10;       //cell width & height
+final int StatusHeigh=15; //For status line below cells
+final int WinWidth=N*S; //Required window width
+final int WinHeigh=N*S+StatusHeigh+StatusHeigh/2;//... and height
+boolean UseLogDraw=false; //On/off of logarithic visualisation
+boolean DumpScreens=false;//On/off of frame dumping
 
 //For controling program from keyboard
 boolean Running=true;
 boolean ready=true;//help for do one step at a time
 
 //Statistics 
-int  Identifier=2739;//random(0,10000);
+int  Identifier=0;//2739;//jak 0 to ustawia na random(0,10000);
 int  Ones=0;
 int  Zeros=0;
 int  ConfOnes=0;
@@ -72,9 +70,9 @@ void draw() //Running - visualization, statistics and model dynamics
       //  saveFrame("A"+RatioA+"B"+RatioB+"No"+Noise+"st-######.png");
       String sc = nf(StepCounter, 8);//"f######" - zlicza klatki ale po pauzie to się rozjeżdza!
       if(Running)
-        saveFrame(CtrlParValuesStr("-")+"st-"+sc+"-sid"+Identifier+".png");
+        saveFrame(CtrlParValuesStr("-")+"-st"+sc+"-sid"+Identifier+".png");
         else
-        saveFrame(CtrlParValuesStr("-")+"st-"+sc+"-sid"+Identifier+"-f########.png");
+        saveFrame(CtrlParValuesStr("-")+"-st"+sc+"-sid"+Identifier+"-f########.png");
       DumpOne=false;
     }
   }
@@ -111,7 +109,10 @@ void draw() //Running - visualization, statistics and model dynamics
     DoMonteCarloStep();
   
   if(Running && STOPAfter<StepCounter)
-        Running=false;
+  {
+    Running=false;
+    println("Step:"+StepCounter+" so we stop running. Use key 'R' to force continuation!");    
+  }
 }
 
 PrintWriter output;//For writing statistics into disk drive
@@ -123,31 +124,38 @@ boolean B[][] = new boolean[N][N]; //Individualism
 
 void setup() //Window and model initialization
 {
-  if(Identifier==0)
-  {
-    Identifier=int(random(0,10000));
-    randomSeed(Identifier);//Nie do końca elegancko ale innego pomysłuy nie mam.
-  }
-  else
-    randomSeed(Identifier);//Nie do końca tak jak bym chciał
-    
-  noLoop(); //setup may take a longof time
+  noLoop(); //setup may take a long time
   //noSmooth(); //For fastest visualization
   //println(param(0)+" "+param(1)+" "+param(2));//"param()" does not work :-(
   
+  println("Setup window");
   textSize(StatusHeigh);
   println("required size=",WinWidth,WinHeigh);
   //size(WinWidth,WinHeigh);//DOES NOT WORK!?!?!?!?!
   size(505,525);
   
+  println("Setup random seed");
+  if(Identifier==0)
+  {
+    Identifier=int(random(0,10000));
+    randomSeed(Identifier);//Nie do końca elegancko ale innego pomysłu nie mam.
+  }
+  else
+    randomSeed(Identifier);//Nie do końca tak jak bym chciał
+  
+  println("Setup clustering calculator & log file");  
   ClStat= new Clustering(A);
-  String LogName=CtrlParValuesStr("-")+"sid"+Identifier+".log";
+  String LogName=CtrlParValuesStr("-")+"-sid"+Identifier+".log";
   output = createWriter(LogName); // Create a new file in the sketch directory
   
+  println("Setup model");  
   DoModelInitialisation();
  
-  loop();
+  println("Setup speed and loop");  
   frameRate(Frames); //maximize speed
+  loop();
+    
+  println("Setup complete");
 }
 
 float RandomGaussPareto(int Dist)// when Dist is negative, it is Pareto, when positive, it is Gauss
@@ -175,14 +183,19 @@ void DoStrenghInitialisation()
    for(int j=0;j<N;j++)
    {
      if(Distribution!=0)
+     {
+       println("STRENGHT DISTRIBUTION NOT TESTED YET!!!");
+       delay(2000);
        exit();//TODO - Test it!: P[i][j]=1+RandomGaussPareto(Distribution)*(MaxStrengh-1);//Not below one !!!
-       else
+     }
+     else
        P[i][j]=MaxStrengh;
    }
 }
 
 void DoModelInitialisation()
 {
+  println("N="+N+" Init A: "+RatioA);
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
     if( random(0,1) < RatioA )
@@ -190,6 +203,7 @@ void DoModelInitialisation()
     else
      A[i][j]=0;
      
+  println("N="+N+" Init B: "+RatioB);
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
     if( random(0,1) < RatioB )
@@ -202,7 +216,8 @@ void DoModelInitialisation()
      B[i][j]=false;
      Conformist++;
     } 
-    
+   
+   println("Init strenghts");
    DoStrenghInitialisation(); 
 }
 
