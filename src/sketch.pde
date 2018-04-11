@@ -1,15 +1,21 @@
+//Model in extended version - with strengh
+//////////////////////////////////////////////////////////////////////////////////////////
 //Control parameters for the model
 float RatioA=0.5; //How many "reds" in the array
-float RatioB=0.5; //How many individualist in the array
-int N=50;       //array side
+float RatioB=0.0; //How many individualist in the array
+int   N=50;       //array side
+float Noise=0;//some noise (0..1)
+int   Distribution=-1;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
+float MaxStrengh=100;//have not to be 0 or negative!
 
 //2D "World" of individuals
-int A[][] = new int[N][N];
-boolean B[][] = new boolean[N][N];
+int A[][] = new int[N][N];     //Attitudes
+float P[][] = new float[N][N];  //Strengh or "power"
+boolean B[][] = new boolean[N][N]; //Individualism
 
 //for flow and speed control of the program
 int StepCounter=0;//!!!
-int M=1;         //How often we draw visualization and calculate statistics
+int M=1;          //How often we draw visualization and calculate statistics
 int Frames=10;    //How many frames per sec. we would like(!) to call.
 boolean Running=true;
 
@@ -17,9 +23,7 @@ boolean Running=true;
 int S=13;       //cell width & height
 int StatusHeigh=13; //For status line below cells
 
-//For step by step model changing 
-//COMMENTED OUT!
-//boolean steponclick=false; //Do step on mouse click or automatically
+//For controling program from keyboard
 boolean ready=true;//help for do one step at a time
 
 //Statistics
@@ -32,11 +36,11 @@ float Stress=0;
 float ConfStress=0;
 float NConStress=0;
 
-float  Dynamics=0;//How many changes?
-float  ConfDynamics=0;
-float  NConDynamics=0;
+float Dynamics=0;//How many changes?
+float ConfDynamics=0;
+float NConDynamics=0;
 
-Clustering ClStat;
+Clustering ClStat;//Cluster finding "device"
 
 PrintWriter output;//For writing statistics into disk drive
 
@@ -89,24 +93,41 @@ void draw() //Running - visualization, statistics and model dynamics
     } 
   }
   else ready=true;
- /* COMMENTED OUT!
-  if(steponclick)
-  {
-   if(mousePressed==true)
-   {
-    if(ready==true)
-    {
-      DoMonteCarloStep();
-      ready=false;
-    }
-   }
-   else ready=true;
-  }
-  else */ 
+ 
   if(Running) 
     DoMonteCarloStep();
 }
 
+float RandomGaussPareto(int Dist)// when Dist is negative, it is Pareto, when positive, it is Gauss
+{
+  if(Dist>0)
+  {
+    float s=0;
+    for(int i=0;i<Dist;i++)
+      s+=random(0,1);
+    return s/Dist;  
+  }
+  else
+  {
+    float s=1;
+    for(int i=Dist;i<0;i++)
+       s*=random(0,1);
+    return s;
+  }
+}
+
+//int   Distribution=1;//1 means flat
+void DoStrenghInitialisation()
+{
+  for(int i=0;i<N;i++)
+   for(int j=0;j<N;j++)
+   {
+     if(Distribution!=0)
+       P[i][j]=RandomGaussPareto(Distribution)*MaxStrengh;
+       else
+       P[i][j]=MaxStrengh;
+   }
+}
 
 void DoModelInitialisation()
 {
@@ -129,6 +150,8 @@ void DoModelInitialisation()
      B[i][j]=false;
      Conformist++;
     } 
+    
+   DoStrenghInitialisation(); 
 }
 
 void DoMonteCarloStep()
@@ -142,19 +165,23 @@ void DoMonteCarloStep()
      int i=int(random(N));
      int j=int(random(N));
      
-     int support=0;
+     float support=0;
      for(int m=i-1;m<=i+1;m++)
       for(int n=j-1;n<=j+1;n++)
       {
         int p=(m+N)%N;
         int r=(n+N)%N;
         if(A[p][r]==A[i][j])
-           support++;
+           support+=P[p][r];
+           else
+           support-=P[p][r];
       }
-  
+      
+     support+=Noise*random(-MaxStrengh,MaxStrengh);
+     
      if(B[i][j])
      {
-      if(support>=5)
+      if(support>=0)
       {
       Dynamics++;
       NConDynamics++;
@@ -165,7 +192,7 @@ void DoMonteCarloStep()
       }
      }
      else
-     if(support<5)
+     if(support<0)
       {
       Dynamics++;
       ConfDynamics++;
@@ -190,9 +217,9 @@ void DoDraw() //Visualize the cells or agents
    for(int j=0;j<N;j++)
    {
     if(A[i][j]==1)
-      fill(255,0,0);
+      fill(255*P[i][j]/MaxStrengh,0,0);
     else
-      fill(255);
+      fill(255*P[i][j]/MaxStrengh);
          
     rect(i*S,j*S,S,S);
     
