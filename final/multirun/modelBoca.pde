@@ -11,7 +11,7 @@ PrintWriter output;//For writing statistics into disk drive
 //REPETITIONS OF THE MODEL 
 //(Control varialbles for most nested virtual loop)
 ////////////////////////////////////////////////////////
-int NumberOfRepetitions=100; //How many shoud be done at all
+int NumberOfRepetitions=1; //How many shoud be done at all
 int CurrentRepetition=0;   //On which repetition we currently work 
 
 // 1D parameter walk:
@@ -21,18 +21,20 @@ final int WALK_NO=0;
 final int WALK_RatioA=1;
 final int WALK_RatioB=2;
 final int WALK_Noise=3;
+final int WALK_Bias=4;
+final int WALK_MaxStrenght=5;
 
 //Parameter "virtual loop" control variables
-float ParameterStart=0.01;
-float ParameterStep=0.01;
-float ParameterEnd= 0.45;//A bit more, because of floating point precision. "double" may help, but not always!
+float ParameterStart=0.0;
+float ParameterStep=0.02;
+float ParameterEnd= 0.50;//A bit more, because of floating point precision. "double" may help, but not always!
 
-int   ParameterWalk=WALK_RatioA;//Parameter walk selector
+int   ParameterWalk=WALK_RatioB;//Parameter walk selector
 float ParameterVal=ParameterStart;//and setting the starting value
 
 //For flow and speed control of the program
 /////////////////////////////////////////////////////
-int M=50;          //How often we draw visualization and calculate statistics. Cant be grater than "STOPAfter" defined in model.pde!
+int M=10;          //How often we draw visualization and calculate statistics. Cant be grater than "STOPAfter" defined in model.pde!
 int Frames=100;     //How many frames per sec. we would like(!) to call.
 boolean Running=true; //Start simulation immediatelly after program begin to run
 
@@ -73,11 +75,7 @@ void setup() //Window and model initialization
   //println(param(0)+" "+param(1)+" "+param(2));//"param()" does not work :-(
   
   textSize(StatusHeigh);
-  println("required size=",N*S,N*S+StatusHeigh+StatusHeigh/2);
-  //size(N*S,N*S+StatusHeigh+StatusHeigh/2);//DOES NOT WORK!
-  //size(WinWidth,WinHeigh);//DOES NOT WORK ALSO!?!?!?!?!
-  size(1050,1010);
-  
+  size(N*S,N*S+StatusHeigh+StatusHeigh/2);
   
   if(ParameterStep!=0)//Changing control parameter, using  ParameterVal and ParameterWalk selector 
   {
@@ -115,6 +113,8 @@ void AssignParameterValWalk()
             case WALK_RatioA: RatioA=(float)ParameterVal; break;
             case WALK_RatioB: RatioB=(float)ParameterVal; break; //Now we have to force conversion
             case WALK_Noise:  Noise=(float)ParameterVal; break;
+            case WALK_Bias:   Bias=(float)ParameterVal; break;
+            case WALK_MaxStrenght: MaxStrengh=(float)ParameterVal; break;
             default: break;}
 }
 

@@ -1,20 +1,18 @@
-// Separated Model class which include model synamics and control parameters 
+// Separated Model class which include model dynamics and control parameters 
 //////////////////////////////////////////////////////////////////////////////////////
 
 int StepCounter=0;  //Current step
-int STOPAfter=100; //How many steps in one run?
+int STOPAfter=500; //How many steps in one run?
 
 //Control parameters for the model
-float RatioA=0.000; //How many "reds" in the array
-float RatioB=0.500; //How many individualist in the array
+float RatioA=0.4500; //How many "reds" in the array
+float RatioB=0.0500; //How many individualist in the array
 boolean  AntyConfoSelfRemoving=true;//Remowing the self of anty/nonconformist from local majority
-float Noise=0; //some noise as a ratio of -MaxStrengh..MaxStrengh
-float Bias=0;  //NOT TESTED!!! Positive BIAS promote "ones", negative promote "zeros" (scaled by MaxStrenght!)
+float Noise=2; //some noise as a ratio of -MaxStrengh..MaxStrengh
+float Bias=0;  //Positive BIAS promote "ones", negative promote "zeros" (scaled by MaxStrenght!)
 
-int   N=100;       //array side
-
-//For futere use:
-float MaxStrengh=100;//Currently fixed. It have not to be 0 or negative!
+int   N=50;       //array side
+float MaxStrengh=100;//have not to be 0 or negative!
 int   Distribution=0;//-5;//-6;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
 
 float log10 (float x) // Calculates the base-10 logarithm of a number
@@ -36,7 +34,23 @@ class TheModel
       B = new boolean[N][N]; //Individualism
   }
   
-
+float RandomGaussPareto(int Dist)// when Dist is negative, it is Pareto, when positive, it is Gauss
+{
+  if(Dist>0)
+  {
+    float s=0;
+    for(int i=0;i<Dist;i++)
+      s+=random(0,1);
+    return s/Dist;  
+  }
+  else
+  {
+    float s=1;
+    for(int i=Dist;i<0;i++)
+       s*=random(0,1);
+    return s;
+  }
+}
 
 //int   Distribution=1;//1 means flat
 void DoStrenghInitialisation()
@@ -44,9 +58,9 @@ void DoStrenghInitialisation()
   for(int i=0;i<N;i++)
    for(int j=0;j<N;j++)
    {
-    // if(Distribution!=0) //Pasted for the future use
-    //   P[i][j]=1+RandomGaussPareto(Distribution)*(MaxStrengh-1);//Not below one !!!
-    //   else
+     if(Distribution!=0)
+       P[i][j]=1+RandomGaussPareto(Distribution)*(MaxStrengh-1);//Not below one !!!
+       else
        P[i][j]=MaxStrengh;
    }
 }
@@ -130,13 +144,12 @@ void DoMonteCarloStep()
      
      support+=Noise*random(-MaxStrengh,MaxStrengh);
      
-     /* For future use - not tested 
      if(Bias!=0) //Bias=0;  //Positive BIAS promote "ones", negative promote "zeros"
       if( Bias>0 && A[i][j]==1) //Support for agent which is belonged to "ones" 
        support+=Bias*MaxStrengh;
        else
        if( Bias<0 && A[i][j]==0) //Support for agent which is belonged to "zeros" 
-           support+=(-Bias)*MaxStrengh; */
+           support+=(-Bias)*MaxStrengh; 
      
      if(B[i][j])
      {
