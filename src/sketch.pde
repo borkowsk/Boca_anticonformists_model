@@ -1,16 +1,13 @@
-//Model in extended version - with strengh
+//Model in version with noise but without strengh
 //////////////////////////////////////////////////////////////////////////////////////////
 //Control parameters for the model
-float RatioA=0.5; //How many "reds" in the array
-float RatioB=0.0; //How many individualist in the array
-int   N=50;       //array side
-float Noise=0;//some noise (0..1)
-int   Distribution=-1;//1 and -1 means flat, 0 means no difference, negative are Pareto, positive is Gaussian
-float MaxStrengh=100;//have not to be 0 or negative!
+float RatioA=0.50; //How many "reds" in the array
+float RatioB=0.01; //How many individualist in the array
+int   N=50;        //array side
+float Noise=1;
 
 //2D "World" of individuals
-int A[][] = new int[N][N];     //Attitudes
-float P[][] = new float[N][N];  //Strengh or "power"
+int A[][] = new int[N][N];  //Attitudes of agents
 boolean B[][] = new boolean[N][N]; //Individualism
 
 //for flow and speed control of the program
@@ -36,9 +33,9 @@ float Stress=0;
 float ConfStress=0;
 float NConStress=0;
 
-float Dynamics=0;//How many changes?
-float ConfDynamics=0;
-float NConDynamics=0;
+float  Dynamics=0;//How many changes?
+float  ConfDynamics=0;
+float  NConDynamics=0;
 
 Clustering ClStat;//Cluster finding "device"
 
@@ -98,36 +95,6 @@ void draw() //Running - visualization, statistics and model dynamics
     DoMonteCarloStep();
 }
 
-float RandomGaussPareto(int Dist)// when Dist is negative, it is Pareto, when positive, it is Gauss
-{
-  if(Dist>0)
-  {
-    float s=0;
-    for(int i=0;i<Dist;i++)
-      s+=random(0,1);
-    return s/Dist;  
-  }
-  else
-  {
-    float s=1;
-    for(int i=Dist;i<0;i++)
-       s*=random(0,1);
-    return s;
-  }
-}
-
-//int   Distribution=1;//1 means flat
-void DoStrenghInitialisation()
-{
-  for(int i=0;i<N;i++)
-   for(int j=0;j<N;j++)
-   {
-     if(Distribution!=0)
-       P[i][j]=RandomGaussPareto(Distribution)*MaxStrengh;
-       else
-       P[i][j]=MaxStrengh;
-   }
-}
 
 void DoModelInitialisation()
 {
@@ -150,8 +117,6 @@ void DoModelInitialisation()
      B[i][j]=false;
      Conformist++;
     } 
-    
-   DoStrenghInitialisation(); 
 }
 
 void DoMonteCarloStep()
@@ -172,16 +137,14 @@ void DoMonteCarloStep()
         int p=(m+N)%N;
         int r=(n+N)%N;
         if(A[p][r]==A[i][j])
-           support+=P[p][r];
-           else
-           support-=P[p][r];
+           support++;
       }
-      
-     support+=Noise*random(-MaxStrengh,MaxStrengh);
+  
+     support+=random(-1,1)*Noise;
      
      if(B[i][j])
      {
-      if(support>=0)
+      if(support>=5)
       {
       Dynamics++;
       NConDynamics++;
@@ -192,7 +155,7 @@ void DoMonteCarloStep()
       }
      }
      else
-     if(support<0)
+     if(support<5)
       {
       Dynamics++;
       ConfDynamics++;
@@ -217,9 +180,9 @@ void DoDraw() //Visualize the cells or agents
    for(int j=0;j<N;j++)
    {
     if(A[i][j]==1)
-      fill(255*P[i][j]/MaxStrengh,0,0);
+      fill(255,0,0);
     else
-      fill(255*P[i][j]/MaxStrengh);
+      fill(255);
          
     rect(i*S,j*S,S,S);
     

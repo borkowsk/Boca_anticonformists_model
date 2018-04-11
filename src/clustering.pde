@@ -1,6 +1,6 @@
 class Clustering
 {
-  boolean UseMoore=false;
+  boolean UseMoore=true;
   boolean Visualise=false;
   int[][] K; 
   int[][] Bak;
